@@ -1,9 +1,9 @@
-import os
-import numpy as np
-from scipy.sparse import csr_matrix
-from loader_base import BaseLoader
 import itertools
-import sys
+import numpy as np
+import os
+
+from loader_base import BaseLoader
+from scipy.sparse import csr_matrix
 
 
 class LibSVMLoader(BaseLoader):
@@ -71,8 +71,7 @@ class LibSVMLoader(BaseLoader):
         return self.num_data_points
 
     def __getitem__(self, idx):
-        assert idx >= 0 and idx < self.num_data_points
-        return (self.features.getrow(idx).toarray()[0], self.classes.getrow(idx).toarray()[0])
+        return (self.features[idx], self.classes[idx])
 
 if __name__ == "__main__":
     print("Loader for LibSVM format")
