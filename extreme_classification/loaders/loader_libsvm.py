@@ -74,10 +74,10 @@ class LibSVMLoader(torch.utils.data.Dataset):
                 data_matrix) == len(cols_matrix)
             assert len(class_rows_matrix) == len(class_matrix)
 
-            self.features = csr_matrix((
-                data_matrix, (data_rows_matrix, cols_matrix)), shape=(self.num_data_points, self.input_dims))
-            self.classes = csr_matrix((np.ones(len(class_rows_matrix)), (
-                class_rows_matrix, class_matrix)), shape=(self.num_data_points, self.input_dims))
+            self.features = csr_matrix((data_matrix, (data_rows_matrix, cols_matrix)), shape=(
+                self.num_data_points, self.input_dims))
+            self.classes = csr_matrix((np.ones(len(class_rows_matrix)), (class_rows_matrix, class_matrix)), shape=(
+                self.num_data_points, self.input_dims))
 
     def __len__(self):
         return self.num_data_points
@@ -89,6 +89,7 @@ class LibSVMLoader(torch.utils.data.Dataset):
     def __repr__(self):
         input_dim = len(self.features[0])
         output_dim = len(self.features[1])
-        fmt_str = 'Sparse dataset of size ({0} x {1}), ({0} x {2})'.format(len(self), input_dim, output_dim)
+        fmt_str = 'Sparse dataset of size ({0} x {1}), ({0} x {2})'.format(
+            len(self), input_dim, output_dim)
         fmt_str += ' in LIBSVM format'
         return fmt_str
