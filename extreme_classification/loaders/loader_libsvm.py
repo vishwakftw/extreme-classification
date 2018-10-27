@@ -87,9 +87,7 @@ class LibSVMLoader(torch.utils.data.Dataset):
                 torch.from_numpy(self.classes[idx].todense()))
 
     def __repr__(self):
-        input_dim = len(self.features[0])
-        output_dim = len(self.features[1])
         fmt_str = 'Sparse dataset of size ({0} x {1}), ({0} x {2})'.format(
-            len(self), input_dim, output_dim)
+            len(self), self.input_dims, self.output_dims)
         fmt_str += ' in LIBSVM format'
         return fmt_str
