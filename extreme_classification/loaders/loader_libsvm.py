@@ -2,6 +2,8 @@ import os
 import torch
 import itertools
 import numpy as np
+import torch
+import torch.utils.data
 
 from scipy.sparse import csr_matrix
 
@@ -91,3 +93,15 @@ class LibSVMLoader(torch.utils.data.Dataset):
             len(self), self.input_dims, self.output_dims)
         fmt_str += ' in LIBSVM format'
         return fmt_str
+
+    def get_data(self):
+        return (self.features, self.classes)
+
+    def get_features(self):
+        return self.features
+
+    def get_classes(self):
+        return self.classes
+
+    def num_classes(self):
+        return self.output_dims
