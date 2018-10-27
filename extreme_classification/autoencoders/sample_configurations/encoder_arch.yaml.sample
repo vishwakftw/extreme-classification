@@ -1,0 +1,12 @@
+- name: Linear
+  kwargs:
+    in_features: 10
+    out_features: 20
+    bias: false
+
+- name: Tanh
+
+- name: Linear
+  kwargs:
+    in_features: 20
+    out_features: 5

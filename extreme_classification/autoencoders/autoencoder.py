@@ -11,18 +11,15 @@ class Autoencoder(nn.Module):
                                encoder
                                Example:
                                 [{'name': 'Linear',
-                                  'kwargs': {'in_features': 10, 'out_features': 10, 'bias': True}
-                                 },
+                                  'kwargs': {'in_features': 10, 'out_features': 10, 'bias': True}},
                                  {'name': 'Tanh'}
                                 ]
         decoder_layer_config : List of dictionaries with layer types and configurations for the
                                decoder
                                Example:
                                [{'name': 'Linear',
-                                 'kwargs': {'in_features': 10, 'out_features': 10}, 'bias': False
-                                },
-                                {'name': 'ReLU', 'kwargs': {'inplace': True}
-                                }
+                                 'kwargs': {'in_features': 10, 'out_features': 10, 'bias': False}},
+                                {'name': 'ReLU', 'kwargs': {'inplace': True}}
                                ]
     """
     def __init__(self, encoder_layer_config, decoder_layer_config):
