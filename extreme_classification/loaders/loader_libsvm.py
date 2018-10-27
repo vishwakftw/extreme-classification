@@ -77,7 +77,7 @@ class LibSVMLoader(torch.utils.data.Dataset):
             self.features = csr_matrix((data_matrix, (data_rows_matrix, cols_matrix)), shape=(
                 self.num_data_points, self.input_dims))
             self.classes = csr_matrix((np.ones(len(class_rows_matrix)), (class_rows_matrix, class_matrix)), shape=(
-                self.num_data_points, self.input_dims))
+                self.num_data_points, self.output_dims))
 
     def __len__(self):
         return self.num_data_points
