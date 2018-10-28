@@ -1,7 +1,7 @@
 from datetime import datetime
 from argparse import ArgumentParser
 from autoencoder import Autoencoder as AE
-from ..loaders.loader_libsvm import LibSVMLoader
+from ..loaders import LibSVMLoader
 
 import sys
 import yaml

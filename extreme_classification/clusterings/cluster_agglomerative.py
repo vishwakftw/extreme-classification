@@ -1,17 +1,13 @@
 import os
 import sklearn
 import sklearn.cluster
-import sys
-
-sys.path.append('..')  # TODO: fix this
-from loaders.loader_libsvm import LibSVMLoader
 
 
 class CoOccurrenceAgglomerativeClustering(object):
     """
     Performs Agglomerative Clustering using negative of co-occurrence as the distance metric
 
-    Accepts a data loader, and performs clustering on the classes of the dataset 
+    Accepts a data loader, and performs clustering on the classes of the dataset
     """
 
     def __init__(self, loader):
@@ -24,8 +20,10 @@ class CoOccurrenceAgglomerativeClustering(object):
         """
         self.class_matrix = loader.get_classes()
         self.distances = -(self.class_matrix * self.class_matrix.T)
-        self.model = sklearn.cluster.AgglomerativeClustering(affinity='precomputed', memory=os.path.join(
-            '/', 'tmp', 'extreme_classification'), compute_full_tree=True, linkage='complete')
+        self.model = sklearn.cluster.AgglomerativeClustering(
+                        affinity='precomputed',
+                        memory=os.path.join('/', 'tmp', 'extreme_classification'),
+                        compute_full_tree=True, linkage='complete')
 
     def get_clusters(self, num_clusters):
         """
@@ -42,7 +40,7 @@ class CoOccurrenceAgglomerativeClustering(object):
 
     def get_distance_matrix(self):
         """
-        @brief      Gets the matrix of distances between any two data points based on negative 
+        @brief      Gets the matrix of distances between any two data points based on negative
                     co-occurrence
 
         @param      self  The object
@@ -51,6 +49,3 @@ class CoOccurrenceAgglomerativeClustering(object):
                     and the jth data point
         """
         return self.distances
-
-if __name__ == "__main__":
-    print("Performs Agglomerative Clustering using negative of co-occurrence as the distance metric")
