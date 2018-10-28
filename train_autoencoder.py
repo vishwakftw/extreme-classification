@@ -1,7 +1,7 @@
 from datetime import datetime
 from argparse import ArgumentParser
-from autoencoder import Autoencoder as AE
-from ..loaders import LibSVMLoader
+from extreme_classification.loaders import LibSVMLoader
+from extreme_classification.autoencoders import Autoencoder as AE
 
 import sys
 import yaml
@@ -67,7 +67,7 @@ optimizer = getattr(torch.optim, opt_config['name'])(model.parameters(), **opt_c
 for epoch in range(0, args.epochs):
     model.train()
     for batch_idx, (data, _) in enumerate(data_loader):
-        data = data.to(device)
+        data = data.to(device=device, dtype=torch.float32)
         optimizer.zero_grad()
         output = model(data)
         loss = torch.nn.functional.mse_loss(output, data)

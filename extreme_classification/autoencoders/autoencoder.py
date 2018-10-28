@@ -34,6 +34,11 @@ class Autoencoder(nn.Module):
                 self.encoder.add_module('{}_{}'.format(layer['name'], i),
                                         getattr(nn, layer['name'])())
 
+        if encoder_layer_config[-1]['name'] == 'Linear':
+            assert encoder_layer_config[-1]['kwargs']['out_features'] == \
+                   decoder_layer_config[0]['kwargs']['in_features'], \
+                   "Size mismatch - encoder and decoder"
+
         self.decoder = nn.Sequential()
         for i, layer in enumerate(decoder_layer_config):
             if 'kwargs' in layer.keys():
