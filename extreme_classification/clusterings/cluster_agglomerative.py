@@ -28,8 +28,6 @@ class CoOccurrenceAgglomerativeClustering(object):
 
         """
         self.class_matrix = loader.get_classes()
-        self.num_data_points = len(loader)
-        self.num_classes = loader.num_classes()
         self.distances = -(self.class_matrix * self.class_matrix.T)
         self.model = sklearn.cluster.AgglomerativeClustering(affinity='precomputed', memory=os.path.join(
             '/', 'tmp', 'extreme_classification'), compute_full_tree=True, linkage='complete')
