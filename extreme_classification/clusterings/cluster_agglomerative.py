@@ -1,12 +1,7 @@
-import copy
-import numpy as np
 import os
 import sklearn
 import sklearn.cluster
 import sys
-
-from cluster import Cluster
-from cluster_utils import CoOccurrenceDistance
 
 sys.path.append('..')  # TODO: fix this
 from loaders.loader_libsvm import LibSVMLoader
