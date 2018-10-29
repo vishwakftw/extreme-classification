@@ -1,4 +1,5 @@
 from datetime import datetime
+from functools import partial
 from argparse import ArgumentParser
 from extreme_classification.loaders import LibSVMLoader
 from extreme_classification.autoencoders import Autoencoder as AE
@@ -7,6 +8,7 @@ from extreme_classification.clusterings import CoOccurrenceAgglomerativeClusteri
 import sys
 import yaml
 import torch
+import numpy as np
 
 
 parser = ArgumentParser()
@@ -73,7 +75,8 @@ interval = args.interval
 
 if for_outputs:
     agglo_clusters = CAAC(loader)
-    get_permutation = agglo_clusters.get_permutation_lambda
+    ordering = agglo_clusters.get_ordering()
+    get_permutation = partial(np.take, indices=ordering, axis=1)
 
 for epoch in range(0, args.epochs):
     model.train()
