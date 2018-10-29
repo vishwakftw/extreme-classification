@@ -50,11 +50,20 @@ class CoOccurrenceAgglomerativeClustering(object):
 
         @return     A 1D array that is a permutation of the class IDs
         """
-        ordering = [[i] for i in range(self.num_data_points)]
+        ordering = {i: [i] for i in range(self.num_data_points)}
         iterations = self.model.children_
+        c = len(ordering)
         for i in range(self.num_data_points - 1):
-            ordering.append(ordering[iterations[i][0]] + ordering[iterations[i][1]])
-        return ordering[-1]
+            ordering[c] = ordering[iterations[i][0]] + ordering[iterations[i][1]]
+            del ordering[iterations[i][0]]
+            del ordering[iterations[i][1]]
+            c += 1
+        return ordering[c - 1]
+        # ordering = [[i] for i in range(self.num_data_points)]
+        # iterations = self.model.children_
+        # for i in range(self.num_data_points - 1):
+        #     ordering.append(ordering[iterations[i][0]] + ordering[iterations[i][1]])
+        # return ordering[-1]
 
     def get_model(self):
         """
