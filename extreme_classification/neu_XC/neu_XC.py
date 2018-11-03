@@ -63,7 +63,7 @@ class NeuralXC(nn.Module):
         self.output_encoder = _get_sequential_module(output_encoder_config)
 
         # Construct output encoder
-        self.output_encoder = _get_sequential_module(output_decoder_config)
+        self.output_decoder = _get_sequential_module(output_decoder_config)
 
         # Construct regressor
         self.regressor = _get_sequential_module(regressor_config)
@@ -118,7 +118,7 @@ class NeuralXC(nn.Module):
         Returns:
             Batched encoding of outputs
         """
-        return self.input_encoder(y)
+        return self.output_encoder(y)
 
     def decode_output(self, enc_y):
         """
