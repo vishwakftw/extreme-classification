@@ -145,10 +145,10 @@ for i in range(args.epochs):
         # 2. Reconstruction error of output
         # 3. Classification (Binary cross entropy) of input-output
         # The first two are weighted using ALPHA_INPUT and ALPHA_OUTPUT.
-        loss_inp_rec = ALPHA_INPUT * F.mse_loss(inp_ae_fp, x)
-        loss_otp_rec = ALPHA_OUTPUT * F.mse_loss(out_ae_fp, y)
+        loss_inp_rec = F.mse_loss(inp_ae_fp, x)
+        loss_otp_rec = F.mse_loss(out_ae_fp, y)
         loss_class = F.binary_cross_entropy(reg_fp, y)
-        net_loss = loss_inp_rec + loss_otp_rec + loss_class
+        net_loss = ALPHA_INPUT * loss_inp_rec + ALPHA_OUTPUT * loss_otp_rec + loss_class
         net_loss.backward()
         optimizer.step()
         all_iters += 1
@@ -157,9 +157,9 @@ for i in range(args.epochs):
                   .format(i, args.epochs, cur_no, len_loader,
                           round(loss_inp_rec.item(), 5), round(loss_otp_rec.item(), 5),
                           round(loss_class.item(), 5)))
-        INP_REC_LOSS.append(loss_inp_rec)
-        OTP_REC_LOSS.append(loss_otp_rec)
-        CLASS_LOSS.append(loss_class)
+        INP_REC_LOSS.append(loss_inp_rec.item())
+        OTP_REC_LOSS.append(loss_otp_rec.item())
+        CLASS_LOSS.append(loss_class.item())
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Plot graphs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if args.plot:
@@ -172,13 +172,14 @@ if args.plot:
     ax4 = plt.subplot(gridspec[1:, 1:5])
 
     ax1.plot(list(range(1, all_iters + 1)), INP_REC_LOSS, 'r', linewidth=2.0)
-    ax1.set_title('Input reconstruction loss')
+    ax1.set_title('Input reconstruction loss : weight = {}'.format(ALPHA_INPUT))
     ax2.plot(list(range(1, all_iters + 1)), OTP_REC_LOSS, 'g', linewidth=2.0)
-    ax2.set_title('Output reconstruction loss')
+    ax2.set_title('Output reconstruction loss : weight = {}'.format(ALPHA_OUTPUT))
     ax3.plot(list(range(1, all_iters + 1)), CLASS_LOSS, 'b', linewidth=2.0)
     ax3.set_title('Classification loss')
     ax4.plot(list(range(1, all_iters + 1)),
-             [irl + orl + cl for (irl, orl, cl) in zip(INP_REC_LOSS, OTP_REC_LOSS, CLASS_LOSS)],
+             [ALPHA_INPUT * irl + ALPHA_OUTPUT * orl + cl
+              for (irl, orl, cl) in zip(INP_REC_LOSS, OTP_REC_LOSS, CLASS_LOSS)],
              'k', linewidth=3.0)
     ax4.set_title('All losses')
     plt.show()
