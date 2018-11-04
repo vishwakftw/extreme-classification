@@ -80,7 +80,7 @@ class NeuralXC(nn.Module):
             As described above - 3-tuple
         """
         ret_tup = (self.decode_input(self.encode_input(x)),
-                   self.decode_output(self.decode_output(y)),
+                   self.decode_output(self.encode_output(y)),
                    self.decode_output(self.regressor(self.encode_input(x))))
         return ret_tup
 

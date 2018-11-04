@@ -1,11 +1,28 @@
 from datetime import datetime
+from functools import partial
 from argparse import ArgumentParser
-from .neu_XC import NeuralXC
-from ..loaders import LibSVMLoader
+from matplotlib import pyplot as plt
+from matplotlib import gridspec as gs
+
+from extreme_classification.neuXC import NeuralXC
+from extreme_classification.loaders import LibSVMLoader
 
 import yaml
 import torch
 import torch.nn.functional as F
+
+
+def weights_init(mdl, scheme):
+    """
+    Function to initialize weights
+
+    Args:
+        mdl : Module whose weights are going to modified
+        scheme : Scheme to use for weight initialization
+    """
+    if isinstance(mdl, torch.nn.Linear):
+        func = getattr(torch.nn.init, scheme + '_')  # without underscore is deprecated
+        func(mdl.weight)
 
 
 TIME_STAMP = datetime.utcnow().isoformat()
@@ -27,6 +44,8 @@ parser.add_argument('--output_decoder_cfg', type=str, required=True,
                     help='Output Decoder architecture configuration in YAML format')
 parser.add_argument('--regressor_cfg', type=str, required=True,
                     help='Regressor architecture configuration in YAML format')
+parser.add_argument('--init_scheme', type=str, default='default',
+                    choices=['xavier_uniform', 'kaiming_uniform', 'default'])
 
 # training configuration arguments
 parser.add_argument('--device', type=str, default='cpu',
@@ -43,13 +62,15 @@ parser.add_argument('--input_ae_loss_weight', type=float, default=1.,
                     help='Weight to give the input autoencoder loss in the entire loss')
 parser.add_argument('--output_ae_loss_weight', type=float, default=1.,
                     help='Weight to give the output autoencoder loss in the entire loss')
+parser.add_argument('--plot', action='store_true',
+                    help='Option to plot the loss variation over iterations')
 
 # optimizer arguments
 parser.add_argument('--optimizer_cfg', type=str, required=True,
                     help='Optimizer configuration in YAML format for NeuralXC model')
 
 # post training arguments
-parser.add_argument('--save_model', type=str, default='all',
+parser.add_argument('--save_model', type=str, default=None,
                     choices=['all', 'inputAE', 'outputAE', 'regressor'], nargs='+',
                     help='Options to save the model partially or completely')
 
@@ -79,11 +100,13 @@ output_dec_cfg = yaml.load(open(args.output_decoder_cfg))
 regress_cfg = yaml.load(open(args.regressor_cfg))
 
 my_neural_XC = NeuralXC(input_enc_cfg, input_dec_cfg, output_enc_cfg, output_dec_cfg, regress_cfg)
+if args.init_scheme != 'default':
+    my_neural_XC.apply(partial(weights_init, scheme=args.init_scheme))
 my_neural_XC = my_neural_XC.to(cur_device)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Optimizer initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-opt_options = yaml.load(open(args.input_ae_optimizer_cfg))
+opt_options = yaml.load(open(args.optimizer_cfg))
 optimizer = getattr(torch.optim, opt_options['name'])(my_neural_XC.parameters(),
                                                       **opt_options['args'])
 
@@ -94,6 +117,7 @@ if USE_CUDA:
     loader_kwargs = {'num_workers': 1, 'pin_memory': True}
 
 loader = LibSVMLoader(args.data_root)
+len_loader = len(loader)
 data_loader = torch.utils.data.DataLoader(loader, batch_size=args.batch_size, shuffle=True,
                                           **loader_kwargs)
 
@@ -102,11 +126,16 @@ data_loader = torch.utils.data.DataLoader(loader, batch_size=args.batch_size, sh
 all_iters = 0
 ALPHA_INPUT = args.input_ae_loss_weight
 ALPHA_OUTPUT = args.output_ae_loss_weight
+INP_REC_LOSS = []
+OTP_REC_LOSS = []
+CLASS_LOSS = []
 
 for i in range(args.epochs):
+    cur_no = 0
     for x, y in iter(data_loader):
         x = x.to(device=cur_device, dtype=torch.float)
         y = y.to(device=cur_device, dtype=torch.float)
+        cur_no += x.size(0)
 
         optimizer.zero_grad()
         inp_ae_fp, out_ae_fp, reg_fp = my_neural_XC(x, y)
@@ -124,24 +153,51 @@ for i in range(args.epochs):
         optimizer.step()
         all_iters += 1
         if all_iters % args.interval == 0:
-            print("{} / {} - INP_REC_LOSS : {}\tOTP_REC_LOSS : {}\tCLASS_LOSS : {}".format(
-                  i, args.epochs, round(loss_inp_rec.item(), 5), round(loss_otp_rec.item(), 5),
-                  round(loss_class.item(), 5)))
+            print("{} / {} :: {} / {} - INP_REC_LOSS : {}\tOTP_REC_LOSS : {}\tCLASS_LOSS : {}"
+                  .format(i, args.epochs, cur_no, len_loader,
+                          round(loss_inp_rec.item(), 5), round(loss_otp_rec.item(), 5),
+                          round(loss_class.item(), 5)))
+        INP_REC_LOSS.append(loss_inp_rec)
+        OTP_REC_LOSS.append(loss_otp_rec)
+        CLASS_LOSS.append(loss_class)
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Plot graphs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+if args.plot:
+    fig = plt.figure(figsize=(9, 18))
+    gridspec = gs.GridSpec(3, 6, figure=fig)
+    gridspec.tight_layout(fig)
+    ax1 = plt.subplot(gridspec[0, :2])
+    ax2 = plt.subplot(gridspec[0, 2:4])
+    ax3 = plt.subplot(gridspec[0, 4:])
+    ax4 = plt.subplot(gridspec[1:, 1:5])
+
+    ax1.plot(list(range(1, all_iters + 1)), INP_REC_LOSS, 'r', linewidth=2.0)
+    ax1.set_title('Input reconstruction loss')
+    ax2.plot(list(range(1, all_iters + 1)), OTP_REC_LOSS, 'g', linewidth=2.0)
+    ax2.set_title('Output reconstruction loss')
+    ax3.plot(list(range(1, all_iters + 1)), CLASS_LOSS, 'b', linewidth=2.0)
+    ax3.set_title('Classification loss')
+    ax4.plot(list(range(1, all_iters + 1)),
+             [irl + orl + cl for (irl, orl, cl) in zip(INP_REC_LOSS, OTP_REC_LOSS, CLASS_LOSS)],
+             'k', linewidth=3.0)
+    ax4.set_title('All losses')
+    plt.show()
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Save your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-if 'inputAE' in args.save_model or 'all' in args.save_model:
-    torch.save(my_neural_XC.input_encoder.to('cpu'),
-               'trained_input_encoder_{}.pt'.format(TIME_STAMP))
-    torch.save(my_neural_XC.input_decoder.to('cpu'),
-               'trained_input_decoder_{}.pt'.format(TIME_STAMP))
+if args.save_model is not None:
+    if 'inputAE' in args.save_model or 'all' in args.save_model:
+        torch.save(my_neural_XC.input_encoder.to('cpu'),
+                   'trained_input_encoder_{}.pt'.format(TIME_STAMP))
+        torch.save(my_neural_XC.input_decoder.to('cpu'),
+                   'trained_input_decoder_{}.pt'.format(TIME_STAMP))
 
-if 'outputAE' in args.save_model or 'all' in args.save_model:
-    torch.save(my_neural_XC.output_encoder.to('cpu'),
-               'trained_output_encoder_{}.pt'.format(TIME_STAMP))
-    torch.save(my_neural_XC.output_decoder.to('cpu'),
-               'trained_output_decoder_{}.pt'.format(TIME_STAMP))
+    if 'outputAE' in args.save_model or 'all' in args.save_model:
+        torch.save(my_neural_XC.output_encoder.to('cpu'),
+                   'trained_output_encoder_{}.pt'.format(TIME_STAMP))
+        torch.save(my_neural_XC.output_decoder.to('cpu'),
+                   'trained_output_decoder_{}.pt'.format(TIME_STAMP))
 
-if 'regressor' in args.save_model or 'all' in args.save_model:
-    torch.save(my_neural_XC.regressor.to('cpu'),
-               'trained_regressor_{}.pt'.format(TIME_STAMP))
+    if 'regressor' in args.save_model or 'all' in args.save_model:
+        torch.save(my_neural_XC.regressor.to('cpu'),
+                   'trained_regressor_{}.pt'.format(TIME_STAMP))
