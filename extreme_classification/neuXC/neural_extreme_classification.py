@@ -81,7 +81,7 @@ class NeuralXC(nn.Module):
         """
         ret_tup = (self.decode_input(self.encode_input(x)),
                    self.decode_output(self.encode_output(y)),
-                   self.decode_output(self.regressor(self.encode_input(x))))
+                   self.predict(x))
         return ret_tup
 
     def encode_input(self, x):
@@ -131,3 +131,12 @@ class NeuralXC(nn.Module):
             Reconstruction of multi-hot encoding of outputs
         """
         return self.output_decoder(enc_y)
+
+    def predict(self, x):
+        """
+        Function to provide predictions for a batch of datapoints.
+
+        Args:
+            x : This is a tensor of batch inputs
+        """
+        return self.decode_output(self.regressor(self.encode_input(x)))

@@ -2,8 +2,6 @@ import os
 import torch
 import itertools
 import numpy as np
-import torch
-import torch.utils.data
 
 from scipy.sparse import csr_matrix
 
@@ -40,7 +38,12 @@ def _parse_data_point(data_point):
 
 
 class LibSVMLoader(torch.utils.data.Dataset):
+    """
+    Class for a dataset in the LibSVM format.
 
+    Args:
+        file_path : Path to the file containing the dataset
+    """
     def __init__(self, file_path):
         assert os.path.isfile(file_path), file_path + " does not exist!"
 
@@ -76,10 +79,11 @@ class LibSVMLoader(torch.utils.data.Dataset):
                 data_matrix) == len(cols_matrix)
             assert len(class_rows_matrix) == len(class_matrix)
 
-            self.features = csr_matrix((data_matrix, (data_rows_matrix, cols_matrix)), shape=(
-                self.num_data_points, self.input_dims))
-            self.classes = csr_matrix((np.ones(len(class_rows_matrix)), (class_rows_matrix, class_matrix)), shape=(
-                self.num_data_points, self.output_dims))
+            self.features = csr_matrix((data_matrix, (data_rows_matrix, cols_matrix)),
+                                       shape=(self.num_data_points, self.input_dims))
+            self.classes = csr_matrix((np.ones(len(class_rows_matrix)),
+                                      (class_rows_matrix, class_matrix)),
+                                      shape=(self.num_data_points, self.output_dims))
 
     def __len__(self):
         return self.num_data_points
@@ -95,12 +99,21 @@ class LibSVMLoader(torch.utils.data.Dataset):
         return fmt_str
 
     def get_data(self):
+        """
+        Function to get the entire dataset
+        """
         return (self.features, self.classes)
 
     def get_features(self):
+        """
+        Function to get the entire set of features
+        """
         return self.features
 
     def get_classes(self):
+        """
+        Function to get the entire set of classes
+        """
         return self.classes
 
     def num_classes(self):
