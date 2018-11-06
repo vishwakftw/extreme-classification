@@ -2,6 +2,8 @@ import os
 import torch
 import itertools
 import numpy as np
+import torch
+import torch.utils.data
 
 from scipy.sparse import csr_matrix
 
@@ -44,6 +46,7 @@ class LibSVMLoader(torch.utils.data.Dataset):
     Args:
         file_path : Path to the file containing the dataset
     """
+
     def __init__(self, file_path):
         assert os.path.isfile(file_path), file_path + " does not exist!"
 
@@ -82,7 +85,7 @@ class LibSVMLoader(torch.utils.data.Dataset):
             self.features = csr_matrix((data_matrix, (data_rows_matrix, cols_matrix)),
                                        shape=(self.num_data_points, self.input_dims))
             self.classes = csr_matrix((np.ones(len(class_rows_matrix)),
-                                      (class_rows_matrix, class_matrix)),
+                                       (class_rows_matrix, class_matrix)),
                                       shape=(self.num_data_points, self.output_dims))
 
     def __len__(self):
