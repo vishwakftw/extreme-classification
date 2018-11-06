@@ -1,0 +1,6 @@
+torch==0.4.1
+scipy==1.1.0
+numpy==1.15.3
+matplotlib==3.0.1
+scikit_learn==0.20.0
+PyYAML==3.13
