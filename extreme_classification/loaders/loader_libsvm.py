@@ -57,7 +57,7 @@ class LibSVMLoader(torch.utils.data.Dataset):
             class_matrix : Precomputed class_matrix.
         """
         assert (file_path is not None and dataset_info is not None) or (
-            feature_matrix is not None and class_matrix is not None),
+            feature_matrix is not None and class_matrix is not None), \
             "Either file path, or feature and class matrices must be specified"
         if file_path is not None:
             assert os.path.isfile(file_path), file_path + " does not exist!"
