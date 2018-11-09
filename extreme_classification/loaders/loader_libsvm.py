@@ -93,9 +93,11 @@ class LibSVMLoader(torch.utils.data.Dataset):
                                            (class_rows_matrix, class_matrix)),
                                           shape=(self.num_data_points, self.output_dims))
         else:
-            self.num_data_points = len(feature_matrix)
-            self.input_dims = len(feature_matrix[0])
-            self.output_dims = len(class_matrix[0])
+            assert feature_matrix.get_shape()[0] == class_matrix.get_shape()[
+                0], "Mismatch in number of features and classes"
+            self.num_data_points = feature_matrix.get_shape()[0]
+            self.input_dims = feature_matrix.get_shape()[1]
+            self.output_dims = feature_matrix.get_shape()[1]
             self.features = feature_matrix
             self.classes = class_matrix
 
@@ -111,6 +113,17 @@ class LibSVMLoader(torch.utils.data.Dataset):
             len(self), self.input_dims, self.output_dims)
         fmt_str += ' in LIBSVM format'
         return fmt_str
+
+    def train_test_split(self, test_fraction=0.2, random_seed=42):
+        assert test_fraction >= 0.0 and test_fraction <= 1.0, "Test set fraction must lie in [0,1]"
+        np.random.seed(random_seed)
+        permutation = np.random.shuffle(np.arange(self.num_data_points))
+        split_index = int(self.num_data_points * (1 - test_fraction))
+        train_loader = LibSVMLoader(feature_matrix=self.features[
+                                    :split_index], class_matrix=self.classes[:split_index])
+        test_loader = LibSVMLoader(feature_matrix=self.features[
+                                   split_index:], class_matrix=self.classes[split_index:])
+        return train_loader, test_loader
 
     def get_data(self):
         """
