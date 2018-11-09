@@ -6,9 +6,11 @@ from matplotlib import gridspec as gs
 
 from extreme_classification.neuXC import NeuralXC
 from extreme_classification.loaders import LibSVMLoader
+from extreme_classification.metrics import precision_at_k, ndcg_score_at_k
 
 import yaml
 import torch
+import numpy as np
 import torch.nn.functional as F
 
 
@@ -32,6 +34,8 @@ parser = ArgumentParser()
 # data argument
 parser.add_argument('--data_root', type=str, required=True,
                     help='Root folder for dataset')
+parser.add_argument('--dataset_info', type=str, required=True,
+                    help='Dataset information in YAML format')
 
 # architecture arguments
 parser.add_argument('--input_encoder_cfg', type=str, required=True,
@@ -73,6 +77,8 @@ parser.add_argument('--optimizer_cfg', type=str, required=True,
 parser.add_argument('--save_model', type=str, default=None,
                     choices=['all', 'inputAE', 'outputAE', 'regressor'], nargs='+',
                     help='Options to save the model partially or completely')
+parser.add_argument('--k', type=str, default=5,
+                    help='k for Precision at k and NDCG at k')
 
 # parse the arguments
 args = parser.parse_args()
@@ -116,7 +122,7 @@ loader_kwargs = {}
 if USE_CUDA:
     loader_kwargs = {'num_workers': 1, 'pin_memory': True}
 
-loader = LibSVMLoader(args.data_root)
+loader = LibSVMLoader(args.data_root, yaml.load(open(args.dataset_info)))
 len_loader = len(loader)
 data_loader = torch.utils.data.DataLoader(loader, batch_size=args.batch_size, shuffle=True,
                                           **loader_kwargs)
@@ -126,11 +132,12 @@ data_loader = torch.utils.data.DataLoader(loader, batch_size=args.batch_size, sh
 all_iters = 0
 ALPHA_INPUT = args.input_ae_loss_weight
 ALPHA_OUTPUT = args.output_ae_loss_weight
+K = args.k
 INP_REC_LOSS = []
 OTP_REC_LOSS = []
 CLASS_LOSS = []
 
-for i in range(args.epochs):
+for epoch in range(args.epochs):
     cur_no = 0
     for x, y in iter(data_loader):
         x = x.to(device=cur_device, dtype=torch.float)
@@ -154,12 +161,28 @@ for i in range(args.epochs):
         all_iters += 1
         if all_iters % args.interval == 0:
             print("{} / {} :: {} / {} - INP_REC_LOSS : {}\tOTP_REC_LOSS : {}\tCLASS_LOSS : {}"
-                  .format(i, args.epochs, cur_no, len_loader,
+                  .format(epoch, args.epochs, cur_no, len_loader,
                           round(loss_inp_rec.item(), 5), round(loss_otp_rec.item(), 5),
                           round(loss_class.item(), 5)))
         INP_REC_LOSS.append(loss_inp_rec.item())
         OTP_REC_LOSS.append(loss_otp_rec.item())
         CLASS_LOSS.append(loss_class.item())
+
+    pred_y = []
+    actual_y = []
+    for x, y in iter(data_loader):
+        x = x.to(device=cur_device, dtype=torch.float)
+
+        pred_y.append(my_neural_XC.predict(x).detach().cpu().numpy())
+        actual_y.append(y.numpy())
+
+    pred_y = np.vstack(pred_y)
+    actual_y = np.vstack(actual_y)
+    p_at_k = [precision_at_k(actual_y[i], pred_y[i], K) for i in range(len(pred_y))]
+    ndcg_at_k = [ndcg_score_at_k(actual_y[i], pred_y[i], K) for i in range(len(pred_y))]
+    print("{0} / {1} :: Precision at {2}: {3}\tNDCG at {2}: {4}"
+          .format(epoch, args.epochs, K, np.mean(p_at_k), np.mean(ndcg_at_k)))
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Plot graphs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if args.plot:
