@@ -41,17 +41,24 @@ def _parse_data_point(data_point):
 class LibSVMLoader(torch.utils.data.Dataset):
     """
     Class for a dataset in the LibSVM format.
-
-    Args:
-        file_path : Path to the file containing the dataset. The file should only consists of rows
-                    of datum in the LibSVM format.
-        dataset_info : Dictionary consisting of three fields `num_data_points`, `input_dims`
-                       and `output_dims`.
     """
 
     def __init__(self, file_path=None, dataset_info=None, feature_matrix=None, class_matrix=None):
+        """
+        Initializes the loader. Either file_path and dataset_info, or feature_matrix and
+        class_matrix, must be provided. If both are provided, data is loaded from the file.
+
+        Args:
+            file_path : Path to the file containing the dataset. The file should only consists of
+                        rows of datum in the LibSVM format.
+            dataset_info : Dictionary consisting of three fields `num_data_points`, `input_dims`
+                           and `output_dims`.
+            feature_matrix : Precomputed feature_matrix.
+            class_matrix : Precomputed class_matrix.
+        """
         assert (file_path is not None and dataset_info is not None) or (
-            feature_matrix is not None and class_matrix is not None), "Either file path, or feature and class matrices must be specified"
+            feature_matrix is not None and class_matrix is not None),
+            "Either file path, or feature and class matrices must be specified"
         if file_path is not None:
             assert os.path.isfile(file_path), file_path + " does not exist!"
             self.num_data_points = dataset_info['num_data_points']
@@ -115,6 +122,17 @@ class LibSVMLoader(torch.utils.data.Dataset):
         return fmt_str
 
     def train_test_split(self, test_fraction=0.2, random_seed=42):
+        """
+        Function to split the data randomly into train and test splits in a specified ratio.
+
+        Args:
+            test_fraction : Fraction of elements to keep in the test set.
+            random_seed : Random seed for shuffling data before splitting.
+
+        Returns:
+            (train_loader, test_loader) : Loaders containing the train and test splits respectively
+
+        """
         assert test_fraction >= 0.0 and test_fraction <= 1.0, "Test set fraction must lie in [0,1]"
         np.random.seed(random_seed)
         permutation = np.random.shuffle(np.arange(self.num_data_points))
@@ -144,4 +162,7 @@ class LibSVMLoader(torch.utils.data.Dataset):
         return self.classes
 
     def num_classes(self):
+        """
+        Function to get number of classes in the dataset 
+        """
         return self.output_dims
