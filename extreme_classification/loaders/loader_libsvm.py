@@ -49,46 +49,55 @@ class LibSVMLoader(torch.utils.data.Dataset):
                        and `output_dims`.
     """
 
-    def __init__(self, file_path, dataset_info):
-        assert os.path.isfile(file_path), file_path + " does not exist!"
-        self.num_data_points = dataset_info['num_data_points']
-        self.input_dims = dataset_info['input_dims']
-        self.output_dims = dataset_info['output_dims']
+    def __init__(self, file_path=None, dataset_info=None, feature_matrix=None, class_matrix=None):
+        assert (file_path is not None and dataset_info is not None) or (
+            feature_matrix is not None and class_matrix is not None), "Either file path, or feature and class matrices must be specified"
+        if file_path is not None:
+            assert os.path.isfile(file_path), file_path + " does not exist!"
+            self.num_data_points = dataset_info['num_data_points']
+            self.input_dims = dataset_info['input_dims']
+            self.output_dims = dataset_info['output_dims']
 
-        with open(file_path, 'r') as f:
-            data = f.readlines()
-            assert self.num_data_points == len(data), "Mismatch in number of data points"
-            class_matrix = []
-            data_rows_matrix = []
-            class_rows_matrix = []
-            cols_matrix = []
-            data_matrix = []
+            with open(file_path, 'r') as f:
+                data = f.readlines()
+                assert self.num_data_points == len(data), "Mismatch in number of data points"
+                class_matrix = []
+                data_rows_matrix = []
+                class_rows_matrix = []
+                cols_matrix = []
+                data_matrix = []
 
-            for i in range(self.num_data_points):
-                class_list, cols, vals = _parse_data_point(data[i])
-                class_matrix.append(class_list)
-                cols_matrix.append(cols)
-                data_matrix.append(vals)
-                data_rows_matrix.append(np.full(len(cols_matrix[i]), i))
-                class_rows_matrix.append(np.full(len(class_matrix[i]), i))
+                for i in range(self.num_data_points):
+                    class_list, cols, vals = _parse_data_point(data[i])
+                    class_matrix.append(class_list)
+                    cols_matrix.append(cols)
+                    data_matrix.append(vals)
+                    data_rows_matrix.append(np.full(len(cols_matrix[i]), i))
+                    class_rows_matrix.append(np.full(len(class_matrix[i]), i))
 
-            class_matrix = list(itertools.chain.from_iterable(class_matrix))
-            data_rows_matrix = list(
-                itertools.chain.from_iterable(data_rows_matrix))
-            class_rows_matrix = list(
-                itertools.chain.from_iterable(class_rows_matrix))
-            cols_matrix = list(itertools.chain.from_iterable(cols_matrix))
-            data_matrix = list(itertools.chain.from_iterable(data_matrix))
+                class_matrix = list(itertools.chain.from_iterable(class_matrix))
+                data_rows_matrix = list(
+                    itertools.chain.from_iterable(data_rows_matrix))
+                class_rows_matrix = list(
+                    itertools.chain.from_iterable(class_rows_matrix))
+                cols_matrix = list(itertools.chain.from_iterable(cols_matrix))
+                data_matrix = list(itertools.chain.from_iterable(data_matrix))
 
-            assert len(data_matrix) == len(data_rows_matrix) and len(
-                data_matrix) == len(cols_matrix)
-            assert len(class_rows_matrix) == len(class_matrix)
+                assert len(data_matrix) == len(data_rows_matrix) and len(
+                    data_matrix) == len(cols_matrix)
+                assert len(class_rows_matrix) == len(class_matrix)
 
-            self.features = csr_matrix((data_matrix, (data_rows_matrix, cols_matrix)),
-                                       shape=(self.num_data_points, self.input_dims))
-            self.classes = csr_matrix((np.ones(len(class_rows_matrix)),
-                                       (class_rows_matrix, class_matrix)),
-                                      shape=(self.num_data_points, self.output_dims))
+                self.features = csr_matrix((data_matrix, (data_rows_matrix, cols_matrix)),
+                                           shape=(self.num_data_points, self.input_dims))
+                self.classes = csr_matrix((np.ones(len(class_rows_matrix)),
+                                           (class_rows_matrix, class_matrix)),
+                                          shape=(self.num_data_points, self.output_dims))
+        else:
+            self.num_data_points = len(feature_matrix)
+            self.input_dims = len(feature_matrix[0])
+            self.output_dims = len(class_matrix[0])
+            self.features = feature_matrix
+            self.classes = class_matrix
 
     def __len__(self):
         return self.num_data_points
