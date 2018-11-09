@@ -2,7 +2,6 @@ import os
 import torch
 import itertools
 import numpy as np
-import torch
 import torch.utils.data
 
 from scipy.sparse import csr_matrix
@@ -44,18 +43,21 @@ class LibSVMLoader(torch.utils.data.Dataset):
     Class for a dataset in the LibSVM format.
 
     Args:
-        file_path : Path to the file containing the dataset
+        file_path : Path to the file containing the dataset. The file should only consists of rows
+                    of datum in the LibSVM format.
+        dataset_info : Dictionary consisting of three fields `num_data_points`, `input_dims`
+                       and `output_dims`.
     """
 
-    def __init__(self, file_path):
+    def __init__(self, file_path, dataset_info):
         assert os.path.isfile(file_path), file_path + " does not exist!"
+        self.num_data_points = dataset_info['num_data_points']
+        self.input_dims = dataset_info['input_dims']
+        self.output_dims = dataset_info['output_dims']
 
         with open(file_path, 'r') as f:
             data = f.readlines()
-            self.num_data_points, self.input_dims, self.output_dims = list(
-                map(int, data[0].split(' ')))
-            assert self.num_data_points == len(
-                data) - 1, "Mismatch in number of data points"
+            assert self.num_data_points == len(data), "Mismatch in number of data points"
             class_matrix = []
             data_rows_matrix = []
             class_rows_matrix = []
@@ -63,7 +65,7 @@ class LibSVMLoader(torch.utils.data.Dataset):
             data_matrix = []
 
             for i in range(self.num_data_points):
-                class_list, cols, vals = _parse_data_point(data[i + 1])
+                class_list, cols, vals = _parse_data_point(data[i])
                 class_matrix.append(class_list)
                 cols_matrix.append(cols)
                 data_matrix.append(vals)
@@ -92,8 +94,8 @@ class LibSVMLoader(torch.utils.data.Dataset):
         return self.num_data_points
 
     def __getitem__(self, idx):
-        return (torch.from_numpy(self.features[idx].todense()),
-                torch.from_numpy(self.classes[idx].todense()))
+        return (torch.from_numpy(self.features[idx].todense().reshape(-1)),
+                torch.from_numpy(self.classes[idx].todense().reshape(-1)))
 
     def __repr__(self):
         fmt_str = 'Sparse dataset of size ({0} x {1}), ({0} x {2})'.format(
