@@ -135,12 +135,14 @@ class LibSVMLoader(torch.utils.data.Dataset):
         """
         assert test_fraction >= 0.0 and test_fraction <= 1.0, "Test set fraction must lie in [0,1]"
         np.random.seed(random_seed)
-        permutation = np.random.shuffle(np.arange(self.num_data_points))
+        permutation = np.random.permutation(np.arange(self.num_data_points))
+        permuted_features = self.features[permutation]
+        permuted_classes = self.classes[permutation]
         split_index = int(self.num_data_points * (1 - test_fraction))
-        train_loader = LibSVMLoader(feature_matrix=self.features[
-                                    :split_index], class_matrix=self.classes[:split_index])
-        test_loader = LibSVMLoader(feature_matrix=self.features[
-                                   split_index:], class_matrix=self.classes[split_index:])
+        train_loader = LibSVMLoader(feature_matrix=permuted_features[
+                                    :split_index], class_matrix=permuted_classes[:split_index])
+        test_loader = LibSVMLoader(feature_matrix=permuted_features[
+                                   split_index:], class_matrix=permuted_classes[split_index:])
         return train_loader, test_loader
 
     def get_data(self):
