@@ -40,6 +40,29 @@ class CoOccurrenceAgglomerativeClustering(object):
         clusters = self.model.fit_predict(self.distances.toarray())
         return clusters
 
+    def get_cluster_merge_indices(self):
+        """
+        Gets the classes in each cluster at each iteration of merging
+
+        Returns:
+            A 2D array, where the ith element contains class indices in the ith cluster id
+        """
+        ordering = [[i] for i in range(self.vector_length)]
+        iterations = self.model.children_
+        for i in range(self.vector_length - 1):
+            ordering.append(ordering[iterations[i][0]] + ordering[iterations[i][1]])
+        return ordering
+
+    def get_merge_iterations(self):
+        """
+        Gets the order in which classes are merged during clustering
+
+        Returns:
+            A 1D array, with the ith element consisting of the two cluster ids that are merged in
+            the ith step
+        """
+        return self.model.children_
+
     def get_ordering(self):
         """
         Gets an ordering of classes of the dataset based on clusters
