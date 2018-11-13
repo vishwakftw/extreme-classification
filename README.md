@@ -18,7 +18,11 @@ Requirements:
 - Scikit-Learn
 - PyYAML
 
-Requirements can be installed using pip:
+Requirements can be installed using `pip`:
 ```bash
 $ pip install -r requirements.txt 
+```
+or using `conda`:
+```bash
+conda install --file requirements.txt
 ```
