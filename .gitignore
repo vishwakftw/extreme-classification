@@ -108,3 +108,6 @@ data/
 
 # configuration files
 *.yml
+
+# backup files
+*~
