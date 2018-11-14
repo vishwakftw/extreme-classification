@@ -1,3 +1,4 @@
+from sklearn import svm
 from datetime import datetime
 from functools import partial
 from argparse import ArgumentParser
@@ -10,8 +11,6 @@ from extreme_classification.metrics import precision_at_k, ndcg_score_at_k
 
 import yaml
 import numpy as np
-
-from sklearn import svm
 
 TIME_STAMP = datetime.utcnow().isoformat()
 
