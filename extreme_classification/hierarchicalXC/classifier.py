@@ -1,7 +1,7 @@
 import numpy as np
 from ..clusterings import CoOccurrenceAgglomerativeClustering
 import sys
-
+import scipy
 
 class HierarchicalXC(object):
     """
@@ -46,7 +46,7 @@ class HierarchicalXC(object):
             train_y[:l_0, 0] = 1
             train_y[l_0:l_1, 1] = 1
             train_y[l_1:] = 1
-            classifier = train_single_classifier(train_X, train_y)
+            classifier = self.train_single_classifier(train_X, train_y)
             self.classifiers[merge] = classifier
 
     def train_single_classifier(self, train_X, train_y):
@@ -77,7 +77,7 @@ class HierarchicalXC(object):
         """
         start_id = len(self.merge_iterations) - 1
         classes = scipy.sparse.lil_matrix(np.array(self.num_classes))
-        traverse_classifiers(start_id, X, classes)
+        self.traverse_classifiers(start_id, X, classes)
         return classes
 
     def traverse_classifiers(self, current_id, X, classes):
@@ -92,8 +92,8 @@ class HierarchicalXC(object):
         if classifier_0_id < self.num_classes:
             classes[id_0, classifier_0_id] = 1
         else:
-            traverse_classifiers(classifier_0_id - self.num_classes, X, classes)
+            self.traverse_classifiers(classifier_0_id - self.num_classes, X, classes)
         if classifier_1_id < self.num_classes:
             classes[id_1, classifier_1_id] = 1
         else:
-            traverse_classifiers(classifier_1_id - self.num_classes, X, classes)
+            self.traverse_classifiers(classifier_1_id - self.num_classes, X, classes)
