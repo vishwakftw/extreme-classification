@@ -1,16 +1,11 @@
-from sklearn import multiclass, svm
 from datetime import datetime
-from functools import partial
 from argparse import ArgumentParser
-from matplotlib import pyplot as plt
-from matplotlib import gridspec as gs
+from sklearn import multiclass, svm
 
 from extreme_classification.hierarchicalXC import HierarchicalXC
 from extreme_classification.loaders import LibSVMLoader
-from extreme_classification.metrics import precision_at_k, ndcg_score_at_k
 
 import yaml
-import numpy as np
 
 TIME_STAMP = datetime.utcnow().isoformat()
 
@@ -46,6 +41,6 @@ loader = LibSVMLoader(args.data_root, yaml.load(open(args.dataset_info)))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Train your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-my_hierarchical_XC.train(loader, multiclass.OneVsRestClassifier)
+my_hierarchical_XC.train(loader, multiclass.OneVsRestClassifier, estimator=svm.SVC())
 predictions = my_hierarchical_XC.predict(loader.get_data()[0])
 print(predictions.toarray())

@@ -1,8 +1,7 @@
-import numpy as np
 from ..clusterings import CoOccurrenceAgglomerativeClustering
-import sys
-import scipy
-import sklearn
+
+import numpy as np
+import scipy.sparse as ssp
 
 
 class DummyClassifier(object):
@@ -20,7 +19,7 @@ class HierarchicalXC(object):
         pass
 
     def train(self, loader, base_classifier, **kwargs):  # TODO add max_depth
-        """ 
+        """
         Trains the tree of classifiers on a given dataset
 
         Args:
@@ -41,7 +40,7 @@ class HierarchicalXC(object):
             class_indexes = []
             for i in range(2):
                 class_i_list = self.merge_indices[self.merge_iterations[merge][i]]
-                class_i_indexes = scipy.sparse.find(self.class_matrix[:, class_i_list] == 1)
+                class_i_indexes = ssp.find(self.class_matrix[:, class_i_list] == 1)
                 class_indexes.append(class_i_indexes[0])
             data_only_0 = np.setdiff1d(class_indexes[0], class_indexes[1], assume_unique=True)
             data_only_1 = np.setdiff1d(class_indexes[1], class_indexes[0], assume_unique=True)
@@ -49,7 +48,7 @@ class HierarchicalXC(object):
             l_0 = data_only_0.shape[0]
             l_1 = data_only_1.shape[0]
             l_both = data_both.shape[0]
-            train_X = scipy.sparse.vstack((self.feature_matrix[data_only_0], self.feature_matrix[
+            train_X = ssp.vstack((self.feature_matrix[data_only_0], self.feature_matrix[
                                           data_only_1], self.feature_matrix[data_both]))
             train_y = np.zeros((l_0 + l_1 + l_both, 2))
             train_y[:l_0, 0] = 1
@@ -59,11 +58,11 @@ class HierarchicalXC(object):
             self.classifiers[merge] = classifier
 
     def train_single_classifier(self, train_X, train_y):
-        """ 
+        """
         Trains a single classifier (a single tree node) on binary data
 
         Args:
-            train_X : training data points 
+            train_X : training data points
             train_y : training class labels (0 or 1)
 
         Returns:
@@ -73,15 +72,13 @@ class HierarchicalXC(object):
         assert len(train_X) == len(train_y), "Size mismatch in data points and labels"
         if len(train_y) == 0:
             return DummyClassifier()
-        # self.base_classifier(self.classifier_params)
-        clf = sklearn.multiclass.OneVsRestClassifier(
-            sklearn.svm.SVC(gamma='scale'))  # TODO: Fix this
+        clf = self.base_classifier(**self.classifier_params)
         clf.fit(train_X, train_y)
         return clf
 
     def predict(self, X):
-        """ 
-        Predicts classes given data 
+        """
+        Predicts classes given data
 
         Args:
             X : the dataset to predict on
@@ -91,12 +88,12 @@ class HierarchicalXC(object):
         """
         X = X.toarray()
         start_id = len(self.merge_iterations) - 1
-        classes = scipy.sparse.lil_matrix(np.zeros((len(X), self.num_classes)))
+        classes = ssp.lil_matrix(np.zeros((len(X), self.num_classes)))
         self.traverse_classifiers(start_id, X, classes)
         return classes
 
     def traverse_classifiers(self, current_id, X, classes):
-        """ 
+        """
         Traverses a node in the tree of classifers, and recursively calls itself to traverse child
         nodes
 
@@ -109,8 +106,6 @@ class HierarchicalXC(object):
         preds = classifier.predict(X)
         id_0 = np.where(preds[:, 0] == 1)
         id_1 = np.where(preds[:, 1] == 1)
-        X_0 = X[id_0]
-        X_1 = X[id_1]
         classifier_0_id = self.merge_iterations[current_id][0]
         classifier_1_id = self.merge_iterations[current_id][1]
         if classifier_0_id < self.num_classes:
