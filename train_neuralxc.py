@@ -77,7 +77,7 @@ parser.add_argument('--optimizer_cfg', type=str, required=True,
 parser.add_argument('--save_model', type=str, default=None,
                     choices=['all', 'inputAE', 'outputAE', 'regressor'], nargs='+',
                     help='Options to save the model partially or completely')
-parser.add_argument('--k', type=str, default=5,
+parser.add_argument('--k', type=int, default=5,
                     help='k for Precision at k and NDCG at k')
 
 # parse the arguments
@@ -136,6 +136,8 @@ K = args.k
 INP_REC_LOSS = []
 OTP_REC_LOSS = []
 CLASS_LOSS = []
+AVG_P_AT_K = []
+AVG_NDCG_AT_K = []
 
 for epoch in range(args.epochs):
     cur_no = 0
@@ -182,17 +184,21 @@ for epoch in range(args.epochs):
     ndcg_at_k = [ndcg_score_at_k(actual_y[i], pred_y[i], K) for i in range(len(pred_y))]
     print("{0} / {1} :: Precision at {2}: {3}\tNDCG at {2}: {4}"
           .format(epoch, args.epochs, K, np.mean(p_at_k), np.mean(ndcg_at_k)))
+    AVG_P_AT_K.append(np.mean(p_at_k))
+    AVG_NDCG_AT_K.append(np.mean(ndcg_at_k))
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Plot graphs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if args.plot:
     fig = plt.figure(figsize=(9, 18))
-    gridspec = gs.GridSpec(3, 6, figure=fig)
+    gridspec = gs.GridSpec(4, 6, figure=fig)
     gridspec.tight_layout(fig)
     ax1 = plt.subplot(gridspec[0, :2])
     ax2 = plt.subplot(gridspec[0, 2:4])
     ax3 = plt.subplot(gridspec[0, 4:])
-    ax4 = plt.subplot(gridspec[1:, 1:5])
+    ax4 = plt.subplot(gridspec[1:3, 1:5])
+    ax5 = plt.subplot(gridspec[3, :3])
+    ax6 = plt.subplot(gridspec[3, 3:])
 
     ax1.plot(list(range(1, all_iters + 1)), INP_REC_LOSS, 'r', linewidth=2.0)
     ax1.set_title('Input reconstruction loss : weight = {}'.format(ALPHA_INPUT))
@@ -205,7 +211,12 @@ if args.plot:
               for (irl, orl, cl) in zip(INP_REC_LOSS, OTP_REC_LOSS, CLASS_LOSS)],
              'k', linewidth=3.0)
     ax4.set_title('All losses')
+    ax5.plot(list(range(1, args.epochs + 1)), AVG_P_AT_K, 'g', linewidth=2.0)
+    ax5.set_title('Average Precision at {} (over all datapoints) with epochs'.format(K))
+    ax6.plot(list(range(1, args.epochs + 1)), AVG_NDCG_AT_K, 'b', linewidth=2.0)
+    ax6.set_title('Average NDCG at {} (over all datapoints) with epochs'.format(K))
     plt.show()
+
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Save your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
