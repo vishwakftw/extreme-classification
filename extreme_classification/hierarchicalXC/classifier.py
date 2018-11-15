@@ -49,7 +49,7 @@ class HierarchicalXC(object):
             l_1 = data_only_1.shape[0]
             l_both = data_both.shape[0]
             train_X = ssp.vstack((self.feature_matrix[data_only_0], self.feature_matrix[
-                                          data_only_1], self.feature_matrix[data_both]))
+                data_only_1], self.feature_matrix[data_both]))
             train_y = np.zeros((l_0 + l_1 + l_both, 2))
             train_y[:l_0, 0] = 1
             train_y[l_0:l_1, 1] = 1
@@ -104,15 +104,16 @@ class HierarchicalXC(object):
         """
         classifier = self.classifiers[current_id]
         preds = classifier.predict(X)
-        id_0 = np.where(preds[:, 0] == 1)
-        id_1 = np.where(preds[:, 1] == 1)
-        classifier_0_id = self.merge_iterations[current_id][0]
-        classifier_1_id = self.merge_iterations[current_id][1]
-        if classifier_0_id < self.num_classes:
-            classes[id_0, classifier_0_id] = 1
-        else:
-            self.traverse_classifiers(classifier_0_id - self.num_classes, X, classes)
-        if classifier_1_id < self.num_classes:
-            classes[id_1, classifier_1_id] = 1
-        else:
-            self.traverse_classifiers(classifier_1_id - self.num_classes, X, classes)
+        ids = []
+        X_sub = []
+        classifier_ids = []
+        for c in range(2):
+            ids = np.where(preds[:, c] == 1)[0]
+            if(len(ids)) == 0:
+                continue
+            X_sub = X[ids]
+            classifier_ids = self.merge_iterations[current_id][c]
+            if classifier_ids < self.num_classes:
+                classes[ids, classifier_ids] = 1
+            else:
+                self.traverse_classifiers(classifier_ids - self.num_classes, X_sub, classes)
