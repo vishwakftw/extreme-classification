@@ -1,4 +1,4 @@
-from sklearn import svm
+from sklearn import multiclass, svm
 from datetime import datetime
 from functools import partial
 from argparse import ArgumentParser
@@ -46,5 +46,6 @@ loader = LibSVMLoader(args.data_root, yaml.load(open(args.dataset_info)))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Train your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-my_hierarchical_XC.train(loader, svm.SVC, gamma='scale')
+my_hierarchical_XC.train(loader, multiclass.OneVsRestClassifier)
 predictions = my_hierarchical_XC.predict(loader.get_data()[0])
+print(predictions.toarray())

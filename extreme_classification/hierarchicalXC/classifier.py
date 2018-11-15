@@ -2,6 +2,14 @@ import numpy as np
 from ..clusterings import CoOccurrenceAgglomerativeClustering
 import sys
 import scipy
+import sklearn
+
+
+class DummyClassifier(object):
+
+    def predict(self, X):
+        return np.array([[1, 1]] * len(X))
+
 
 class HierarchicalXC(object):
     """
@@ -38,10 +46,11 @@ class HierarchicalXC(object):
             data_only_0 = np.setdiff1d(class_indexes[0], class_indexes[1], assume_unique=True)
             data_only_1 = np.setdiff1d(class_indexes[1], class_indexes[0], assume_unique=True)
             data_both = np.intersect1d(class_indexes[0], class_indexes[1], assume_unique=True)
-            l_0 = data_only_0.get_shape()[0]
-            l_1 = data_only_1.get_shape()[0]
-            l_both = data_both.get_shape()[0]
-            train_X = scipy.sparse.vstack((data_only_0, data_only_1, data_both))
+            l_0 = data_only_0.shape[0]
+            l_1 = data_only_1.shape[0]
+            l_both = data_both.shape[0]
+            train_X = scipy.sparse.vstack((self.feature_matrix[data_only_0], self.feature_matrix[
+                                          data_only_1], self.feature_matrix[data_both]))
             train_y = np.zeros((l_0 + l_1 + l_both, 2))
             train_y[:l_0, 0] = 1
             train_y[l_0:l_1, 1] = 1
@@ -61,7 +70,12 @@ class HierarchicalXC(object):
             clf : a trained classifier
         """
         train_X = train_X.toarray()
-        clf = self.base_classifier(self.classifier_params)
+        assert len(train_X) == len(train_y), "Size mismatch in data points and labels"
+        if len(train_y) == 0:
+            return DummyClassifier()
+        # self.base_classifier(self.classifier_params)
+        clf = sklearn.multiclass.OneVsRestClassifier(
+            sklearn.svm.SVC(gamma='scale'))  # TODO: Fix this
         clf.fit(train_X, train_y)
         return clf
 
@@ -75,12 +89,22 @@ class HierarchicalXC(object):
         Returns:
             classes : the class predictions for each data point
         """
+        X = X.toarray()
         start_id = len(self.merge_iterations) - 1
-        classes = scipy.sparse.lil_matrix(np.array(self.num_classes))
+        classes = scipy.sparse.lil_matrix(np.zeros((len(X), self.num_classes)))
         self.traverse_classifiers(start_id, X, classes)
         return classes
 
     def traverse_classifiers(self, current_id, X, classes):
+        """ 
+        Traverses a node in the tree of classifers, and recursively calls itself to traverse child
+        nodes
+
+        Args:
+            current_id : position of node in the list of classifiers representing the tree
+            X : data handled by the node
+            classes : class predictions for all the test data points
+        """
         classifier = self.classifiers[current_id]
         preds = classifier.predict(X)
         id_0 = np.where(preds[:, 0] == 1)
