@@ -165,6 +165,6 @@ class LibSVMLoader(torch.utils.data.Dataset):
 
     def num_classes(self):
         """
-        Function to get number of classes in the dataset 
+        Function to get number of classes in the dataset
         """
         return self.output_dims

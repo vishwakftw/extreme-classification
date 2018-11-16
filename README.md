@@ -1,4 +1,4 @@
-# Extreme Classification
+# Extreme Classification [![Build Status](https://travis-ci.org/vishwakftw/extreme-classification.svg?branch=master)](https://travis-ci.org/vishwakftw/extreme-classification)
 
 Project Repository for CS6370 : Information Retrieval offered in Fall 2018
 
