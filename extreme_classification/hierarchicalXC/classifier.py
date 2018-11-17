@@ -89,10 +89,11 @@ class HierarchicalXC(object):
         X = X.toarray()
         start_id = len(self.merge_iterations) - 1
         classes = ssp.lil_matrix(np.zeros((len(X), self.num_classes)))
-        self.traverse_classifiers(start_id, X, classes)
+        ids = np.arange(len(X))
+        self.traverse_classifiers(start_id, X, ids, classes)
         return classes
 
-    def traverse_classifiers(self, current_id, X, classes):
+    def traverse_classifiers(self, current_id, X, this_ids, classes):
         """
         Traverses a node in the tree of classifers, and recursively calls itself to traverse child
         nodes
@@ -103,17 +104,15 @@ class HierarchicalXC(object):
             classes : class predictions for all the test data points
         """
         classifier = self.classifiers[current_id]
-        preds = classifier.predict(X)
+        preds = classifier.predict(X[this_ids])
         ids = []
-        X_sub = []
         classifier_ids = []
         for c in range(2):
-            ids = np.where(preds[:, c] == 1)[0]
+            ids = this_ids[np.where(preds[:, c] == 1)[0]]
             if(len(ids)) == 0:
                 continue
-            X_sub = X[ids]
             classifier_ids = self.merge_iterations[current_id][c]
             if classifier_ids < self.num_classes:
                 classes[ids, classifier_ids] = 1
             else:
-                self.traverse_classifiers(classifier_ids - self.num_classes, X_sub, classes)
+                self.traverse_classifiers(classifier_ids - self.num_classes, X, ids, classes)
