@@ -111,3 +111,7 @@ data/
 
 # backup files
 *~
+
+# saved trained model
+*.pt
+*.sav
