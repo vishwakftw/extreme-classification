@@ -3,8 +3,8 @@ from argparse import ArgumentParser
 from sklearn import multiclass, svm
 from sklearn.externals import joblib
 
-from extreme_classification.hierarchicalXC import HierarchicalXC
 from extreme_classification.loaders import LibSVMLoader
+from extreme_classification.hierarchicalXC import HierarchicalXC
 from extreme_classification.metrics import precision_at_k, ndcg_score_at_k
 
 import yaml
@@ -27,8 +27,8 @@ parser.add_argument('--plot', action='store_true',
                     help='Option to plot the loss variation over iterations')
 
 # post training arguments
-parser.add_argument('--save_model', action='store_true', default=False,
-                    help='Option to save the model completely')
+parser.add_argument('--save_model', action='store_true',
+                    help='Toggle to save model completely')
 parser.add_argument('--k', type=str, default=5,
                     help='k for Precision at k and NDCG at k')
 
@@ -46,15 +46,13 @@ loader = LibSVMLoader(args.data_root, yaml.load(open(args.dataset_info)))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Train your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-my_hierarchical_XC.train(loader, multiclass.OneVsRestClassifier, estimator=svm.SVC(gamma="scale"))
+my_hierarchical_XC.train(loader, multiclass.OneVsRestClassifier, estimator=svm.SVC())
 predictions = my_hierarchical_XC.predict(loader.get_data()[0])
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Calculate the metrics ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 pred_y = predictions.toarray()
-actual_y = []
-for x, y in iter(loader):
-    actual_y.append(y.numpy().reshape(-1))
+actual_y = loader.get_classes().toarray()
 
 k = args.k
 
