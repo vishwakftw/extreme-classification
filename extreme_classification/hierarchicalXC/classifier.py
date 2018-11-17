@@ -80,14 +80,14 @@ class HierarchicalXC(object):
         Returns:
             classes : the class predictions for each data point
         """
-        X = X.toarray()
+        self.X = X.toarray()
         start_id = len(self.merge_iterations) - 1
-        classes = ssp.lil_matrix(np.zeros((len(X), self.num_classes)))
-        ids = np.arange(len(X))
-        self.traverse_classifiers(start_id, X, ids, classes)
-        return classes
+        self.classes = ssp.lil_matrix(np.zeros((len(self.X), self.num_classes)))
+        ids = np.arange(len(self.X))
+        self.traverse_classifiers(start_id, ids)
+        return self.classes
 
-    def traverse_classifiers(self, current_id, X, this_ids, classes):
+    def traverse_classifiers(self, current_id, this_ids):
         """
         Traverses a node in the tree of classifers, and recursively calls itself to traverse child
         nodes
@@ -99,9 +99,9 @@ class HierarchicalXC(object):
         """
         classifier, is_true_classifier = self.classifiers[current_id]
         if not is_true_classifier:
-            preds = np.array([[1, 1]] * len(X[this_ids]))
+            preds = np.array([[1, 1]] * len(self.X[this_ids]))
         else:
-            preds = classifier.predict(X[this_ids])
+            preds = classifier.predict(self.X[this_ids])
         ids = []
         classifier_ids = []
         for c in range(2):
@@ -110,6 +110,6 @@ class HierarchicalXC(object):
                 continue
             classifier_ids = self.merge_iterations[current_id][c]
             if classifier_ids < self.num_classes:
-                classes[ids, classifier_ids] = 1
+                self.classes[ids, classifier_ids] = 1
             else:
-                self.traverse_classifiers(classifier_ids - self.num_classes, X, ids, classes)
+                self.traverse_classifiers(classifier_ids - self.num_classes, ids)
