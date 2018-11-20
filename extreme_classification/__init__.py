@@ -1,3 +1,4 @@
+from extreme_classification import autoencoders
 from extreme_classification import clusterings
 from extreme_classification import loaders
 from extreme_classification import neuXC
