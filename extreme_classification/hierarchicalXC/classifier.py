@@ -12,24 +12,24 @@ class HierarchicalXC(object):
     def __init__(self):
         pass
 
-    def train(self, loader, base_classifier, **kwargs):  # TODO add max_depth
+    def train(self, feature_matrix, class_matrix, base_classifier, **kwargs):  # TODO add max_depth
         """
         Trains the tree of classifiers on a given dataset
 
         Args:
-            loader : loader with training data
+            feature_matrix : scipy csr matrix of input features
+            class_matrix : scipy csr matrix of output class labels
             base_classifier : classifier to use for each tree node
             kwargs : parameters to pass to base_classifier
         """
-        self.loader = loader
         self.base_classifier = base_classifier
         self.classifier_params = kwargs
-        self.feature_matrix, self.class_matrix = loader.get_data()
+        self.feature_matrix, self.class_matrix = feature_matrix, class_matrix
         self.cluster_creator = CoOccurrenceAgglomerativeClustering(self.class_matrix)
         self.merge_indices = self.cluster_creator.get_cluster_merge_indices()
         self.merge_iterations = self.cluster_creator.get_merge_iterations()
         self.classifiers = [None] * len(self.merge_iterations)
-        self.num_classes = self.loader.num_classes()
+        self.num_classes = self.class_matrix.shape[1]
         for merge in range(len(self.merge_iterations) - 1, -1, -1):
             class_indexes = []
             for i in range(2):
