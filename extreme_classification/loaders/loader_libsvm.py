@@ -28,8 +28,8 @@ def _parse_data_point(data_point):
         num_nonzero_features -= 1
         elems = elems[1:]
 
-    cols = np.empty(num_nonzero_features, dtype=int)
-    vals = np.empty(num_nonzero_features, dtype=float)
+    cols = np.empty(num_nonzero_features).astype(np.int32)
+    vals = np.empty(num_nonzero_features).astype(np.float32)
 
     for i in range(num_nonzero_features):
         idx, val = elems[i].split(':')
@@ -83,10 +83,8 @@ class LibSVMLoader(torch.utils.data.Dataset):
                     class_rows_matrix.append(np.full(len(class_matrix[i]), i))
 
                 class_matrix = list(itertools.chain.from_iterable(class_matrix))
-                data_rows_matrix = list(
-                    itertools.chain.from_iterable(data_rows_matrix))
-                class_rows_matrix = list(
-                    itertools.chain.from_iterable(class_rows_matrix))
+                data_rows_matrix = list(itertools.chain.from_iterable(data_rows_matrix))
+                class_rows_matrix = list(itertools.chain.from_iterable(class_rows_matrix))
                 cols_matrix = list(itertools.chain.from_iterable(cols_matrix))
                 data_matrix = list(itertools.chain.from_iterable(data_matrix))
 
@@ -95,13 +93,14 @@ class LibSVMLoader(torch.utils.data.Dataset):
                 assert len(class_rows_matrix) == len(class_matrix)
 
                 self.features = csr_matrix((data_matrix, (data_rows_matrix, cols_matrix)),
-                                           shape=(self.num_data_points, self.input_dims))
+                                           shape=(self.num_data_points, self.input_dims),
+                                           dtype=np.float32)
                 self.classes = csr_matrix((np.ones(len(class_rows_matrix)),
                                            (class_rows_matrix, class_matrix)),
                                           shape=(self.num_data_points, self.output_dims))
         else:
-            assert feature_matrix.get_shape()[0] == class_matrix.get_shape()[
-                0], "Mismatch in number of features and classes"
+            assert feature_matrix.get_shape()[0] == class_matrix.get_shape()[0],\
+                   "Mismatch in number of features and classes"
             self.num_data_points = feature_matrix.get_shape()[0]
             self.input_dims = feature_matrix.get_shape()[1]
             self.output_dims = feature_matrix.get_shape()[1]
@@ -116,8 +115,8 @@ class LibSVMLoader(torch.utils.data.Dataset):
                 torch.from_numpy(self.classes[idx].todense().reshape(-1)))
 
     def __repr__(self):
-        fmt_str = 'Sparse dataset of size ({0} x {1}), ({0} x {2})'.format(
-            len(self), self.input_dims, self.output_dims)
+        fmt_str = 'Sparse dataset of size \
+                   ({0} x {1}), ({0} x {2})'.format(len(self), self.input_dims, self.output_dims)
         fmt_str += ' in LIBSVM format'
         return fmt_str
 
@@ -133,16 +132,17 @@ class LibSVMLoader(torch.utils.data.Dataset):
             (train_loader, test_loader) : Loaders containing the train and test splits respectively
 
         """
-        assert test_fraction >= 0.0 and test_fraction <= 1.0, "Test set fraction must lie in [0,1]"
+        assert test_fraction >= 0.0 and test_fraction <= 1.0,\
+            "Test set fraction must lie in [0, 1]"
         np.random.seed(random_seed)
         permutation = np.random.permutation(np.arange(self.num_data_points))
         permuted_features = self.features[permutation]
         permuted_classes = self.classes[permutation]
         split_index = int(self.num_data_points * (1 - test_fraction))
-        train_loader = LibSVMLoader(feature_matrix=permuted_features[
-                                    :split_index], class_matrix=permuted_classes[:split_index])
-        test_loader = LibSVMLoader(feature_matrix=permuted_features[
-                                   split_index:], class_matrix=permuted_classes[split_index:])
+        train_loader = LibSVMLoader(feature_matrix=permuted_features[:split_index],
+                                    class_matrix=permuted_classes[:split_index])
+        test_loader = LibSVMLoader(feature_matrix=permuted_features[split_index:],
+                                   class_matrix=permuted_classes[split_index:])
         return train_loader, test_loader
 
     def get_data(self):
