@@ -1,5 +1,6 @@
 from ..clusterings import CoOccurrenceAgglomerativeClustering
 
+import math
 import numpy as np
 import scipy.sparse as ssp
 
@@ -12,7 +13,7 @@ class HierarchicalXC(object):
     def __init__(self):
         pass
 
-    def train(self, feature_matrix, class_matrix, base_classifier, **kwargs):  # TODO add max_depth
+    def train(self, feature_matrix, class_matrix, base_classifier, **kwargs):
         """
         Trains the tree of classifiers on a given dataset
 
@@ -70,32 +71,38 @@ class HierarchicalXC(object):
         clf.fit(train_X, train_y)
         return clf, True
 
-    def predict(self, X):
+    def predict(self, X, max_depth=None):
         """
         Predicts classes given data
 
         Args:
             X : the dataset to predict on
+            max_depth : the maximum depth to traverse for predictions. If tree height
+                        is beyond this depth, then all classes at max_depth height are
+                        predicted in the output
 
         Returns:
             classes : the class predictions for each data point
         """
+        if max_depth is None:
+            max_depth = math.inf
         self.test_X = X.toarray()
         start_id = len(self.merge_iterations) - 1
         self.classes = ssp.lil_matrix(np.zeros((len(self.test_X), self.num_classes)))
         ids = np.arange(len(self.test_X))
-        self.traverse_classifiers(start_id, ids)
+        self.traverse_classifiers(start_id, ids, 0, max_depth)
         return self.classes
 
-    def traverse_classifiers(self, current_id, this_ids):
+    def traverse_classifiers(self, current_id, this_ids, current_depth, max_depth):
         """
         Traverses a node in the tree of classifers, and recursively calls itself to traverse child
         nodes
 
         Args:
             current_id : position of node in the list of classifiers representing the tree
-            X : data handled by the node
-            classes : class predictions for all the test data points
+            this_ids : the IDs of data points in self.X over which this classifier operates on
+            current_depth : depth of this classifier in the tree
+            max_depth : maximum depth to traverse in the tree
         """
         classifier, is_true_classifier = self.classifiers[current_id]
         if not is_true_classifier:
@@ -110,6 +117,16 @@ class HierarchicalXC(object):
                 continue
             classifier_ids = self.merge_iterations[current_id][c]
             if classifier_ids < self.num_classes:
+                assert len(self.merge_indices[classifier_ids]) == 1, \
+                    "Something wrong: more than one class ID probably found at leaf node"
+                assert self.merge_indices[classifier_ids][0] == classifier_ids, \
+                    "Mismatch in classifier ID and the class it represents"
                 self.classes[ids, classifier_ids] = 1
+            elif current_depth >= max_depth:
+                xy_pairs = np.array([[x, y]
+                                     for x in ids for y in self.merge_indices[classifier_ids]])
+                mat_idx = np.array((xy_pairs[:, 0], xy_pairs[:, 1]))
+                self.classes[mat_idx[0], mat_idx[1]] = 1
             else:
-                self.traverse_classifiers(classifier_ids - self.num_classes, ids)
+                self.traverse_classifiers(classifier_ids - self.num_classes,
+                                          ids, current_depth + 1, max_depth)
