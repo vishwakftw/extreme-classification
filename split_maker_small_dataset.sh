@@ -1,9 +1,17 @@
 #!/bin/bash
 
-train_split_src="./data/Bibtex/bibtex_trSplit.txt"
-test_split_src="./data/Bibtex/bibtex_tstSplit.txt"
-full_dataset_src="./data/Bibtex/Bibtex_data.txt"
-dataset_name="./data/Bibtex/bibtex"
+if [ "$#" != "4" ] ; then
+    echo "Arguments to the script: path to train split file, path to test split file, 
+          path to full dataset file where all rows are datapoints, dataset name"
+    exit 1
+fi
+
+train_split_src=$1
+test_split_src=$2
+full_dataset_src=$3
+dataset_name=$(dirname "$full_dataset_src")"/$4"
+
+echo $dataset_name
 
 # training dataset
 while read num rest;
