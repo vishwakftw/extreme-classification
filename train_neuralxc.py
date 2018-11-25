@@ -8,6 +8,7 @@ from extreme_classification.neuXC import NeuralXC
 from extreme_classification.loaders import LibSVMLoader
 from extreme_classification.metrics import precision_at_k, ndcg_score_at_k
 
+import os
 import yaml
 import torch
 import numpy as np
@@ -33,7 +34,9 @@ parser = ArgumentParser()
 
 # data argument
 parser.add_argument('--data_root', type=str, required=True,
-                    help='Root folder for dataset')
+                    help="""Root folder for dataset.
+                            Note that the root folder should contain files either ending with
+                            test / train""")
 parser.add_argument('--dataset_info', type=str, required=True,
                     help='Dataset information in YAML format')
 
@@ -122,10 +125,20 @@ loader_kwargs = {}
 if USE_CUDA:
     loader_kwargs = {'num_workers': 1, 'pin_memory': True}
 
-loader = LibSVMLoader(args.data_root, yaml.load(open(args.dataset_info)))
-len_loader = len(loader)
-data_loader = torch.utils.data.DataLoader(loader, batch_size=args.batch_size, shuffle=True,
-                                          **loader_kwargs)
+dset_opts = yaml.load(open(args.dataset_info))
+USE_TEST_DSET = 'test_filename' in dset_opts.keys()
+
+train_file = os.path.join(args.data_root, dset_opts['train_filename'])
+train_loader = LibSVMLoader(train_file, dset_opts['train_opts'])
+len_loader = len(train_loader)
+train_data_loader = torch.utils.data.DataLoader(train_loader, batch_size=args.batch_size,
+                                                shuffle=True, **loader_kwargs)
+
+if USE_TEST_DSET:
+    test_file = os.path.join(args.data_root, dset_opts['test_filename'])
+    test_loader = LibSVMLoader(test_file, dset_opts['test_opts'])
+    test_data_loader = torch.utils.data.DataLoader(test_loader, batch_size=1000,
+                                                   shuffle=False)
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Train your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -141,7 +154,7 @@ AVG_NDCG_AT_K = []
 
 for epoch in range(args.epochs):
     cur_no = 0
-    for x, y in iter(data_loader):
+    for x, y in iter(train_data_loader):
         x = x.to(device=cur_device, dtype=torch.float)
         y = y.to(device=cur_device, dtype=torch.float)
         cur_no += x.size(0)
@@ -172,7 +185,7 @@ for epoch in range(args.epochs):
 
     pred_y = []
     actual_y = []
-    for x, y in iter(data_loader):
+    for x, y in iter(train_data_loader):
         x = x.to(device=cur_device, dtype=torch.float)
 
         pred_y.append(my_neural_XC.predict(x).detach().cpu().numpy())
@@ -186,7 +199,6 @@ for epoch in range(args.epochs):
           .format(epoch, args.epochs, K, np.mean(p_at_k), np.mean(ndcg_at_k)))
     AVG_P_AT_K.append(np.mean(p_at_k))
     AVG_NDCG_AT_K.append(np.mean(ndcg_at_k))
-
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Plot graphs ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 if args.plot:
@@ -217,7 +229,6 @@ if args.plot:
     ax6.set_title('Average NDCG at {} (over all datapoints) with epochs'.format(K))
     plt.show()
 
-
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Save your model ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 if args.save_model is not None:
@@ -236,3 +247,22 @@ if args.save_model is not None:
     if 'regressor' in args.save_model or 'all' in args.save_model:
         torch.save(my_neural_XC.regressor.to('cpu'),
                    'trained_regressor_{}.pt'.format(TIME_STAMP))
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Prediction on test ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+if USE_TEST_DSET:
+    print("Test set characteristics")
+    pred_y = []
+    actual_y = []
+    for x, y in iter(test_data_loader):
+        x = x.to(device=cur_device, dtype=torch.float)
+
+        pred_y.append(my_neural_XC.predict(x).detach().cpu().numpy())
+        actual_y.append(y.numpy())
+
+    pred_y = np.vstack(pred_y)
+    actual_y = np.vstack(actual_y)
+    p_at_k = [precision_at_k(actual_y[i], pred_y[i], K) for i in range(len(pred_y))]
+    ndcg_at_k = [ndcg_score_at_k(actual_y[i], pred_y[i], K) for i in range(len(pred_y))]
+    print("{0} / {1} :: Precision at {2}: {3}\tNDCG at {2}: {4}"
+          .format(epoch, args.epochs, K, np.mean(p_at_k), np.mean(ndcg_at_k)))

@@ -111,8 +111,8 @@ class LibSVMLoader(torch.utils.data.Dataset):
         return self.num_data_points
 
     def __getitem__(self, idx):
-        return (torch.from_numpy(self.features[idx].todense().reshape(-1)),
-                torch.from_numpy(self.classes[idx].todense().reshape(-1)))
+        return (torch.from_numpy(self.features[idx].todense()).view(-1),
+                torch.from_numpy(self.classes[idx].todense()).view(-1))
 
     def __repr__(self):
         fmt_str = 'Sparse dataset of size \
