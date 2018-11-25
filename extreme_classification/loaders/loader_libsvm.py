@@ -19,14 +19,14 @@ def _parse_data_point(data_point):
                                    cols are the indices of values
                                    vals are the values taken at the indices
     """
-    class_list = None
+    class_list = np.empty(0).astype(np.int32)
     elems = data_point.split(' ')
-    num_nonzero_features = len(elems)
+    num_nonzero_features = len(elems) - 1
 
-    if ':' not in elems[0]:
+    if elems[0] != '':
         class_list = np.array(list(map(int, elems[0].split(','))))
-        num_nonzero_features -= 1
-        elems = elems[1:]
+
+    elems = elems[1:]
 
     cols = np.empty(num_nonzero_features).astype(np.int32)
     vals = np.empty(num_nonzero_features).astype(np.float32)
@@ -100,7 +100,7 @@ class LibSVMLoader(torch.utils.data.Dataset):
                                           shape=(self.num_data_points, self.output_dims))
         else:
             assert feature_matrix.get_shape()[0] == class_matrix.get_shape()[0],\
-                   "Mismatch in number of features and classes"
+                "Mismatch in number of features and classes"
             self.num_data_points = feature_matrix.get_shape()[0]
             self.input_dims = feature_matrix.get_shape()[1]
             self.output_dims = feature_matrix.get_shape()[1]
