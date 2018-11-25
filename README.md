@@ -10,7 +10,7 @@ Project Repository for CS6370 : Information Retrieval offered in Fall 2018
 
 Requirements:
 
-- Python 3.5 or above
+- Python 2.7 or 3.5
 - PyTorch 0.4.1 or above
 - NumPy
 - SciPy

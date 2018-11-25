@@ -1,6 +1,5 @@
 from ..clusterings import CoOccurrenceAgglomerativeClustering
 
-import math
 import numpy as np
 import scipy.sparse as ssp
 
@@ -85,7 +84,7 @@ class HierarchicalXC(object):
             classes : the class predictions for each data point
         """
         if max_depth is None:
-            max_depth = math.inf
+            max_depth = len(self.classifiers) + 1
         self.test_X = X.toarray()
         start_id = len(self.merge_iterations) - 1
         self.classes = ssp.lil_matrix(np.zeros((len(self.test_X), self.num_classes)))
