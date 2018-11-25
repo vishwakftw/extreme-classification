@@ -70,7 +70,7 @@ parser.add_argument('--njobs', type=int, default=-1,
                             scikit-learn\'s API for more information about this option""")
 
 # optimizer arguments
-parser.add_argument('--optimizer_cfg', type=str, required=True,
+parser.add_argument('--optimizer_cfg', type=str, default=None,
                     help='Optimizer configuration in YAML format for Autoencoder model')
 
 # post training arguments
@@ -99,10 +99,6 @@ if args.seed is not None:
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Model initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 my_hierarchical_XC = HierarchicalXC()
-
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Optimizer initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-opt_options = yaml.load(open(args.optimizer_cfg))
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Dataloader initialization ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -133,6 +129,10 @@ if args.input_ae_dim > 0:
     train_data_loader = torch.utils.data.DataLoader(train_loader, batch_size=args.batch_size,
                                                     shuffle=True, **loader_kwargs)
 
+    if args.optimizer_cfg is None:
+        raise ValueError("Autoencoder config file not specified")
+
+    opt_options = yaml.load(open(args.optimizer_cfg))
     optimizer = getattr(torch.optim, opt_options['name'])(ae.parameters(),
                                                           **opt_options['args'])
 
