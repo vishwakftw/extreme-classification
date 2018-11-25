@@ -1,8 +1,8 @@
 from datetime import datetime
 from functools import partial
-from argparse import ArgumentParser
 from matplotlib import pyplot as plt
 from matplotlib import gridspec as gs
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 from extreme_classification.neuXC import NeuralXC
 from extreme_classification.loaders import LibSVMLoader
@@ -30,7 +30,7 @@ def weights_init(mdl, scheme):
 
 TIME_STAMP = datetime.utcnow().isoformat()
 
-parser = ArgumentParser()
+parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 
 # data argument
 parser.add_argument('--data_root', type=str, required=True,

@@ -2,4 +2,5 @@ from extreme_classification import autoencoders
 from extreme_classification import clusterings
 from extreme_classification import loaders
 from extreme_classification import neuXC
+from extreme_classification import hierarchicalXC
 from extreme_classification import metrics

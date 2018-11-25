@@ -1,8 +1,8 @@
 from datetime import datetime
-from argparse import ArgumentParser
 from scipy.sparse import csr_matrix
 from sklearn import multiclass, svm
 from sklearn.externals import joblib
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
 from extreme_classification.loaders import LibSVMLoader
 from extreme_classification.hierarchicalXC import HierarchicalXC
@@ -41,7 +41,7 @@ def generate_encodings(data_loader, ae):
 
 TIME_STAMP = datetime.utcnow().isoformat()
 
-parser = ArgumentParser()
+parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
 
 # data argument
 parser.add_argument('--data_root', type=str, required=True,
