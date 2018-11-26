@@ -19,12 +19,11 @@ def precision_at_k(ground_truth, predictions, k=5, pos_label=1):
     """
     assert len(ground_truth) == len(predictions), "P@k: Length mismatch"
 
-    n_pos_vals = (ground_truth == pos_label).sum()
     desc_order = np.argsort(predictions)[::-1]  # ::-1 reverses array
     ground_truth = np.take(ground_truth, desc_order[:k])  # the top indices
     relevant_preds = (ground_truth == pos_label).sum()
 
-    return relevant_preds / min(n_pos_vals, k)
+    return relevant_preds / k
 
 
 def dcg_score_at_k(ground_truth, predictions, k=5, pos_label=1):
@@ -71,4 +70,7 @@ def ndcg_score_at_k(ground_truth, predictions, k=5, pos_label=1):
     """
     dcg_at_k = dcg_score_at_k(ground_truth, predictions, k, pos_label)
     best_dcg_at_k = dcg_score_at_k(ground_truth, ground_truth, k, pos_label)
-    return dcg_at_k / best_dcg_at_k
+    if best_dcg_at_k == 0:
+        return 0
+    else:
+        return dcg_at_k / best_dcg_at_k
