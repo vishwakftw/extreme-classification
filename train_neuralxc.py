@@ -264,5 +264,5 @@ if USE_TEST_DSET:
     actual_y = np.vstack(actual_y)
     p_at_k = [precision_at_k(actual_y[i], pred_y[i], K) for i in range(len(pred_y))]
     ndcg_at_k = [ndcg_score_at_k(actual_y[i], pred_y[i], K) for i in range(len(pred_y))]
-    print("{0} / {1} :: Precision at {2}: {3}\tNDCG at {2}: {4}"
+    print("Precision at {2}: {3}\tNDCG at {2}: {4}"
           .format(epoch, args.epochs, K, np.mean(p_at_k), np.mean(ndcg_at_k)))
