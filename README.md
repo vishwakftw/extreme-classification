@@ -5,63 +5,69 @@
 
 - **HierarchicalXC**: A hierarchical clustering based approach
 
-## Using the module
+This project also includes scripts for training and testing on datasets using this module.
 
-### Setup
+## Setup
 
-- Requirements for the project are listed in `requirements.txt`. In addition to these, it is mandatory to have PyTorch installed in your system with version 0.4.1 or higher.
-   - Requirements can be installed using `pip`:
-     ```bash
-     $ pip install -r requirements.txt 
-     ```
-     or using `conda`:
-     ```bash
-     $ conda install --file requirements.txt
+### Prerequisites
+
+- Python 2.7 or 3.5
+- Requirements for the project are listed in [requirements.txt](requirements.txt). In addition to these, PyTorch 0.4.1 or higher is necessary. The requirements can be installed using pip:
+   ```bash
+   $ pip install -r requirements.txt 
+   ```
+   or using conda:
+   ```bash
+   $ conda install --file requirements.txt
      ```
 
 ### Installing `extreme_classification`
 
 - Clone the repository.
+  ```bash
+  $ git clone https://github.com/vishwakftw/extreme-classification
+  $ cd extreme-classification
+  ```
 
-- Run `python setup.py install`.
+- Install
+  ```bash
+  $ python setup.py install
+  ```
 
 - To test if your installation is successful, try running the command:
+  ```bash
+  $ python -c "import extreme_classification"
+  ```
+
+## Using the scripts
+
+### NeuralXC
+
+Use `train_neuralxc.py`. A description of the options available can be found using:
+
 ```bash
-$ python -c "import extreme_classification"
+python train_neuralxc.py --help
 ```
 
-## Using the training scripts
+This script trains (and optionally evaluates) evaluates a model on a given dataset using the NeuralXC algorithm.
 
-- `train_neuralxc.py` is a Python script used to train an extreme classification model using **NeuralXC**. You can run the script by passing required options:
+### HierarchicalXC
+
+Use `train_hierarchicalXC.py`. A description of the options available can be found using:
 ```bash
-python train_neuralxc.py [-h] --data_root DATA_ROOT --dataset_info DATASET_INFO
-                         --input_encoder_cfg INPUT_ENCODER_CFG --input_decoder_cfg INPUT_DECODER_CFG
-                         --output_encoder_cfg OUTPUT_ENCODER_CFG --output_decoder_cfg OUTPUT_DECODER_CFG
-                         --regressor_cfg REGRESSOR_CFG --optimizer_cfg OPTIMIZER_CFG
-                         [--init_scheme {xavier_uniform,kaiming_uniform,default}]
-                         [--device DEVICE] [--seed SEED] [--batch_size BATCH_SIZE] [--epochs EPOCHS]
-                         [--interval INTERVAL] [--input_ae_loss_weight INPUT_AE_LOSS_WEIGHT]
-                         [--output_ae_loss_weight OUTPUT_AE_LOSS_WEIGHT] [--k K]
-                         [--plot] [--save_model {all,inputAE,outputAE,regressor} [{all,inputAE,outputAE,regressor} ...]]
+python train_hierarchicalXC.py --help
 ```
-For more information about the options, please run `python train_neuralxc.py -h`.
+This script trains (and optionally evaluates) evaluates a model on a given dataset using the HierarchicalXC algorithm.
 
-- `train_hierarchicalXC.py` is a Python script to train an extreme classification model using **HierarchicalXC**. You can run the script by passing required options:
-```bash
-python train_hierarchicalXC.py [-h] --data_root DATA_ROOT --dataset_info
-                               DATASET_INFO [--device DEVICE] [--seed SEED]
-                               [--batch_size BATCH_SIZE] [--epochs EPOCHS]
-                               [--interval INTERVAL] [--input_ae_dim INPUT_AE_DIM]
-                               [--njobs NJOBS] [--optimizer_cfg OPTIMIZER_CFG]
-                               [--save_model] [--k K]
-```
-For more information about the options, please run `python train_hierarchicalxc.py -h`.
+## Data Format
+The input data must be in the [LIBSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) format. An example of such a dataset is the Bibtex dataset found [here](http://manikvarma.org/downloads/XC/XMLRepository.html).
 
+The first row in the LIBSVM format specifies dataset files and input and output dimensions. This row must be removed, and this information must be provided through configuration files, as explained below.
 
-### Configuration files
+## Configuration files
 
-#### Neural Network Configurations
-- For `train_neuralxc.py`, you have to have valid neural network configurations for the autoencoders of the inputs and outputs and the regressor in YAML. An example of a configuration file would be this:
+### Neural Network Configurations
+For using NeuralXC through `train_neuralxc.py`, you need to have valid neural network configurations for the autoencoders of the inputs, labels and the regressor in the YAML format. An example configuration file is:
 ```yaml
 - name: Linear
   kwargs:
@@ -82,8 +88,8 @@ For more information about the options, please run `python train_hierarchicalxc.
 ```
 Please note that the `name` and `kwargs` attributes have to resemble the same names as those in PyTorch.
 
-#### Optimizer Configurations
-- Optimizer configurations are very similar to the neural network configurations. Here you have to retain the same naming as PyTorch for optimizer names and their parameters - for example: `lr` for learning rate. Below is a sample:
+### Optimizer Configurations
+Optimizer configurations are very similar to the neural network configurations. Here you have to retain the same naming as PyTorch for optimizer names and their parameters - for example: `lr` for learning rate. Below is a sample:
 ```yaml
 name: Adam
 args:
@@ -92,8 +98,8 @@ args:
   weight_decay: 0.0001
 ```
 
-#### Dataset Configurations
-- In both the scripts, you are required to specify a data root (`data_root`), dataset information file (`dataset_info`). `data_root` corresponds to the folder containing the datasets. `dataset_info` requires a YAML file in the following format:
+### Dataset Configurations
+In both the scripts, you are required to specify a data root (`data_root`), dataset information file (`dataset_info`). `data_root` corresponds to the folder containing the datasets. `dataset_info` requires a YAML file in the following format:
 ```yaml
 train_filename:
 train_opts:
@@ -108,7 +114,7 @@ test_opts:
   output_dims:
 ```
 
-- If the test dataset doesn't exist, then please remove the fields `test_filename` and `test_opts`. An example for the Bibtex dataset would be:
+If the test dataset doesn't exist, then please remove the fields `test_filename` and `test_opts`. An example for the Bibtex dataset would be:
 ```yaml
 train_filename: bibtex_train.txt
 train_opts:
@@ -123,4 +129,8 @@ test_opts:
   output_dims: 159
 ```
 
-##### This is a project designed for CS6370 : Information Retrieval offered in Fall 2018
+## License
+This code is provided under the [MIT License](LICENSE)
+
+---
+This project was a part of the course CS6370: Information Retrieval offered in Fall 2018 at IIT Hyderabad
