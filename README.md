@@ -1,4 +1,4 @@
-# Extreme Classification [![Build Status](https://travis-ci.org/vishwakftw/extreme-classification.svg?branch=master)](https://travis-ci.org/vishwakftw/extreme-classification)
+# [Extreme Classification](https://github.com/vishwakftw/extreme-classification) [![Build Status](https://travis-ci.org/vishwakftw/extreme-classification.svg?branch=master)](https://travis-ci.org/vishwakftw/extreme-classification)
 
 `extreme_classification` is a Python module designed for extreme classification tasks with two new algorithms:
 - **NeuralXC**: A deep-learning based solution using autoencoders and neural networks.
@@ -46,7 +46,7 @@ This project also includes scripts for training and testing on datasets using th
 Use `train_neuralxc.py`. A description of the options available can be found using:
 
 ```bash
-python train_neuralxc.py --help
+$ python train_neuralxc.py --help
 ```
 
 This script trains (and optionally evaluates) evaluates a model on a given dataset using the NeuralXC algorithm.
@@ -55,14 +55,27 @@ This script trains (and optionally evaluates) evaluates a model on a given datas
 
 Use `train_hierarchicalXC.py`. A description of the options available can be found using:
 ```bash
-python train_hierarchicalXC.py --help
+$ python train_hierarchicalXC.py --help
 ```
 This script trains (and optionally evaluates) evaluates a model on a given dataset using the HierarchicalXC algorithm.
+
+## Replicating Reported Results
+To run NeuralXC and HierarchicalXC in the configuration used in the report, use:
+```bash
+$ ./train_neuralxc_with_args.sh
+```
+
+To run the baseline model, use:
+```bash
+$ python baseline.py
+```
+
+Links to downloading each dataset used can be found [here](report/README.md), and the project report can be found [here](report/report.pdf). The configuration files used (described below) for each dataset can be found [here](setups).
 
 ## Data Format
 The input data must be in the [LIBSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvm/) format. An example of such a dataset is the Bibtex dataset found [here](http://manikvarma.org/downloads/XC/XMLRepository.html).
 
-The first row in the LIBSVM format specifies dataset files and input and output dimensions. This row must be removed, and this information must be provided through configuration files, as explained below.
+The first row in the LIBSVM format specifies dataset size and input and output dimensions. This row must be removed, and this information must be provided through configuration files, as explained below.
 
 ## Configuration files
 
@@ -130,7 +143,9 @@ test_opts:
 ```
 
 ## License
-This code is provided under the [MIT License](LICENSE)
+This code is provided under the [MIT License](LICENSE).
 
 ---
-This project was a part of the course CS6370: Information Retrieval offered in Fall 2018 at IIT Hyderabad
+This project was a part of the course CS6370: Information Retrieval offered in Fall 2018 at IIT Hyderabad.
+
+Team members: Vishwak Srinivasan, Sukrut Rao, and Harsh Agarwal.
