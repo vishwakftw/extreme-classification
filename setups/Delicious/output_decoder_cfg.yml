@@ -1,0 +1,24 @@
+- name: Linear
+  kwargs:
+    in_features: 82
+    out_features: 163
+
+- name: ReLU
+  kwargs:
+    inplace: True
+
+- name: Linear
+  kwargs:
+    in_features: 163
+    out_features: 326
+
+- name: ReLU
+  kwargs:
+    inplace: True
+
+- name: Linear
+  kwargs:
+    in_features: 326
+    out_features: 983
+
+- name: Sigmoid

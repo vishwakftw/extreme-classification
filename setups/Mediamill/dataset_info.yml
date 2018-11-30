@@ -1,0 +1,11 @@
+train_filename: mediamill_train.txt
+train_opts:
+  num_data_points: 30993
+  input_dims: 120
+  output_dims: 101
+
+test_filename: mediamill_test.txt
+test_opts:
+  num_data_points: 12914
+  input_dims: 120
+  output_dims: 101

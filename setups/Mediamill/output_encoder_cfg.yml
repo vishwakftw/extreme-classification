@@ -1,0 +1,26 @@
+- name: Linear
+  kwargs:
+    in_features: 101
+    out_features: 75
+
+- name: LeakyReLU
+  kwargs:
+    negative_slope: 0.1
+    inplace: True
+
+- name: Linear
+  kwargs:
+    in_features: 75
+    out_features: 50
+
+- name: LeakyReLU
+  kwargs:
+    negative_slope: 0.1
+    inplace: True
+
+- name: Linear
+  kwargs:
+    in_features: 50
+    out_features: 32
+
+- name: Tanh

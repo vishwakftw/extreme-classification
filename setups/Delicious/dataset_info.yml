@@ -1,0 +1,11 @@
+train_filename: delicious_train.txt
+train_opts:
+  num_data_points: 12920
+  input_dims: 500
+  output_dims: 983
+
+test_filename: delicious_test.txt
+test_opts:
+  num_data_points: 3185
+  input_dims: 500
+  output_dims: 983

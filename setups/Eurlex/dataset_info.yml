@@ -1,0 +1,11 @@
+train_filename: eurlex_train.txt
+train_opts:
+  num_data_points: 15539
+  input_dims: 5000
+  output_dims: 3993
+
+test_filename: eurlex_test.txt
+test_opts:
+  num_data_points: 3809
+  input_dims: 5000
+  output_dims: 3993

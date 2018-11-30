@@ -1,0 +1,13 @@
+- name: Linear
+  kwargs:
+    in_features: 50
+    out_features: 41
+
+- name: ReLU
+
+- name: Linear
+  kwargs:
+    in_features: 41
+    out_features: 32
+
+- name: Tanh

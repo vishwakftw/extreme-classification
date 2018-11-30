@@ -1,0 +1,25 @@
+- name: Linear
+  kwargs:
+    in_features: 500
+    out_features: 1250
+
+- name: LeakyReLU
+  kwargs:
+    negative_slope: 0.2
+    inplace: True
+
+- name: Linear
+  kwargs:
+    in_features: 1250
+    out_features: 2500
+
+- name: LeakyReLU
+  kwargs:
+    negative_slope: 0.2
+
+- name: Linear
+  kwargs:
+    in_features: 2500
+    out_features: 5000
+
+- name: ReLU
